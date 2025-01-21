@@ -10,6 +10,12 @@ WIP
 
 ![architecture](images/architecture.png)
 
+The app relies on tf2 saving its console output to a file, as well as on VBCable to actually redirect audio to TF2.
+
+The main components of the app (LogWatcher, MessageProcessor, AudioPlayer) are connected to each other in an event-driven way, utilizing channels as queues. This might change in the future.
+
+The app also leverages plugin architecture to allow for custom TTS implementations. It can be done by implementing the `Tts` trait and passing it to the main `App` struct.
+
 ## Todos
 
 In no particular order
