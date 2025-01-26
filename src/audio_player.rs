@@ -1,7 +1,7 @@
 use enigo::{Enigo, Key, Settings, Keyboard, Direction::{Press, Release}};
 use tempfile::NamedTempFile;
 use tokio::sync::mpsc::Receiver;
-use rodio::{Decoder, OutputStream};
+use rodio::{cpal::traits::HostTrait, Decoder, DeviceTrait, OutputStream};
 use std::fs::File;
 use rodio::Source;
 use symphonia::core::formats::FormatOptions;
@@ -33,15 +33,46 @@ pub enum Error {
     Mp3DurationNotFound
 }
 
+#[derive(Clone)]
+pub struct AudioConfig {
+    vc_key: Key,
+    audio_device: rodio::Device
+}
+
+impl AudioConfig {
+    pub fn new(vc_key: Option<Key>, audio_device_name: Option<String>) -> Result<Self, GenericError> {
+        let host = rodio::cpal::default_host();
+        
+        let audio_device = match audio_device_name {
+            Some(audio_device_name) => host.output_devices()?
+                .find(|d| { d.name().map(|name| name == audio_device_name).unwrap_or(false) })
+                .ok_or("desired audio device not found")?,
+            None => host.default_output_device()
+                .ok_or("")?
+        };
+
+        info!("using [{}] as an audio device", audio_device.name().unwrap_or("".into()));
+
+        let vc_key = vc_key.unwrap_or(Key::V);
+
+        Ok(Self {
+            vc_key,
+            audio_device
+        })
+    }
+}
+
 pub struct AudioPlayer {
+    config: AudioConfig,
     receiver: Receiver<NamedTempFile>,
     enigo: Enigo,
     is_key_held: bool,
 }
 
 impl AudioPlayer {
-    pub fn new(receiver: Receiver<NamedTempFile>) -> Self {
+    pub fn new(config: AudioConfig, receiver: Receiver<NamedTempFile>) -> Self {
         Self {
+            config,
             receiver,
             enigo: Enigo::new(&Settings::default()).unwrap(),
             is_key_held: false
@@ -52,7 +83,7 @@ impl AudioPlayer {
         while let Some(speech_file) = self.receiver.recv().await {
             if !self.is_key_held {
                 // TODO: pass down the vc key instaed
-                self.enigo.key(Key::V, Press).unwrap();
+                self.enigo.key(self.config.vc_key, Press).unwrap();
                 self.is_key_held = true;
             }
 
@@ -61,7 +92,7 @@ impl AudioPlayer {
             };
 
             if self.receiver.is_empty() {
-                self.enigo.key(Key::V, Release).unwrap();
+                self.enigo.key(self.config.vc_key, Release).unwrap();
                 self.is_key_held = false;
             }
         }
@@ -84,7 +115,7 @@ impl AudioPlayer {
                     let source = Decoder::new(file.try_clone()?)?;
                     source.total_duration().unwrap()  // safe - should always work for WAVs I HOPE
                 }
-                "mp3" => get_mp3_duration(&file).map_err(|_| Error::Mp3DurationNotFound)?,  // TODO: manage this error
+                "mp3" => get_mp3_duration(&file).map_err(|_| Error::Mp3DurationNotFound)?,
                 _ => return Err(Error::UnsupportedExtension),
             };
 
@@ -96,7 +127,7 @@ impl AudioPlayer {
 
         info!("Audio duration: {:?}", duration);
 
-        let (_stream, stream_handle) = OutputStream::try_default()?;
+        let (_stream, stream_handle) = OutputStream::try_from_device(&self.config.audio_device)?;
         let source = Decoder::new(file)?;
         
         stream_handle.play_raw(source.convert_samples())?;

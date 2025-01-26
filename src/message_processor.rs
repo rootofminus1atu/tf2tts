@@ -1,7 +1,8 @@
-use crate::tts::tts_trait::Tts;
 use tempfile::NamedTempFile;
 use tokio::sync::mpsc::{Sender, Receiver};
 use tracing::info;
+
+use crate::tts::Tts;
 
 
 #[derive(Debug, Clone, thiserror::Error)]

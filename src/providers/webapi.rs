@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 use tracing::info;
 
-use super::tts_trait::Tts;
+use crate::tts::Tts;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -19,11 +19,11 @@ pub enum Error {
     InvalidInput(String),
 }
 
-pub struct TtsService {
+pub struct WebApiTts {
     client: reqwest::Client
 }
 
-impl TtsService {
+impl WebApiTts {
     pub fn new() -> Self {
         Self::new_with_client(reqwest::Client::new())
     }
@@ -33,7 +33,7 @@ impl TtsService {
     }
 }
 
-impl Tts for TtsService {
+impl Tts for WebApiTts {
     type Error = Error;
 
     async fn get_speech(&self, text: &str) -> Result<NamedTempFile, Self::Error> {
