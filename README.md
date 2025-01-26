@@ -21,8 +21,8 @@ The app also leverages plugin architecture to allow for custom TTS implementatio
 In no particular order
 
 Alpha:
-- [ ] rearrange the tts module, maybe move `tts_impl` to an example provider
-- [ ] add audio device to config
+- [x] rearrange the tts module, maybe move `tts_impl` to an example provider
+- [x] add audio device to config
 - [ ] potentially extract config into a config file
 - [ ] turn this into a workspace, the main core lib, a terminal/gui app, etc.
 - [ ] examples
