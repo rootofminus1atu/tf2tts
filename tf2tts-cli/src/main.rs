@@ -1,16 +1,7 @@
-use app::{App, AppConfig};
-use audio_player::AudioConfig;
-use log_watcher::LogWatcherConfig;
 use dotenvy::dotenv;
-use providers::webapi::WebApiTts;
 use std::env;
+use tf2tts_core::{app::{App, AppConfig}, audio_player::AudioConfig, log_watcher::LogWatcherConfig, providers::webapi::WebApiTts};
 
-mod tts;
-mod message_processor;
-mod audio_player;
-mod log_watcher;
-mod app;
-mod providers;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
