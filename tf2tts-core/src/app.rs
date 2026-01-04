@@ -22,7 +22,7 @@ pub enum Error<E> {
     AudioPlayerError(#[from] crate::audio_player::Error)
 }
 
-pub struct App<T: Tts = WebApiTts> {
+pub struct App<T: Tts> {
     watcher: LogWatcher,
     message_processor: MessageProcessor<T>,
     audio_player: AudioPlayer

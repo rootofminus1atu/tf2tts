@@ -4,3 +4,4 @@ pub mod audio_player;
 pub mod log_watcher;
 pub mod app;
 pub mod providers;
+pub mod pipeline;
